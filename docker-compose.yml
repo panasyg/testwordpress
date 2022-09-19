@@ -1,0 +1,49 @@
+version: '3'
+
+services:
+#generating a SSL cert with swag:
+  swag:
+    image: linuxserver/swag
+    container_name: swag
+    cap_add:
+      - NET_ADMIN
+    environment:
+      #URL of website for certificate
+      - URL=site12345.westeurope.cloudapp.azure.com
+      - VALIDATION=http
+    volumes:
+      #setting up nginx-conf with nginx-default
+      - "./nginx-default:/config/nginx/site-confs/default"
+    ports:
+      - 443:443
+      - 80:80
+    restart: unless-stopped
+#database
+  db:
+   image: mysql:5.7
+   volumes:
+    #dbdata is mounting as volume
+     - dbdata:/var/lib/mysql
+   restart: always
+   environment:
+     MYSQL_ROOT_PASSWORD: somewordpress
+     MYSQL_DATABASE: wordpress
+     MYSQL_USER: wordpress
+     MYSQL_PASSWORD: wordpress
+#wordpress
+  wordpress:
+   depends_on:
+     - db
+   image: wordpress:latest
+   volumes:
+    #mounting WordPress Media Content as volume
+     - uploads:/var/www/html/uploads:rw
+   restart: always
+   environment:
+     WORDPRESS_DB_HOST: db:3306
+     WORDPRESS_DB_USER: wordpress
+     WORDPRESS_DB_PASSWORD: wordpress
+
+volumes:
+  dbdata:
+  uploads:
